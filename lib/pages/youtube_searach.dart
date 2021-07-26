@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:youtube_search_flutter/model/youtube_serach_model.dart';
 
 class YouTubeSearch extends StatefulWidget {
   @override
@@ -8,6 +12,19 @@ class YouTubeSearch extends StatefulWidget {
 class _YouTubeSearchState extends State<YouTubeSearch> {
   int navigatinIndex = 0;
   bool _isSearch = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMockResponse();
+  }
+
+  Future<void> _loadMockResponse() async {
+    final assetData =
+        await rootBundle.loadString('assets/api/youtube_serach.json');
+    final response = YoutubeSearchModel.fromJson(json.decode(assetData));
+    print(response.items[0].snippet.thumbnail.high.url);
+  }
 
   Widget _searchWidget() {
     return Row(
@@ -125,7 +142,7 @@ class _YouTubeSearchState extends State<YouTubeSearch> {
         itemBuilder: (context, index) {
           return Card(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   height: 200,
