@@ -1,9 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:youtube_search_flutter/model/item_data.dart';
 import 'package:youtube_search_flutter/model/youtube_serach_model.dart';
+import 'package:http/http.dart' as http;
 
 class YouTubeSearch extends StatefulWidget {
   @override
@@ -15,6 +14,16 @@ class _YouTubeSearchState extends State<YouTubeSearch> {
   bool _isSearch = false;
   List<ItemData> items = [];
   bool _isLoading = true;
+  String baseUrl = "https://youtube.googleapis.com/youtube/v3/";
+  String apiKey = "AIzaSyDSSvJNMt-nWEKg23SU74gCRaTyTlJSfrU";
+  TextEditingController _controller = TextEditingController();
+  static const String maxResult = "10";
+  final httpClient = http.Client();
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -23,16 +32,17 @@ class _YouTubeSearchState extends State<YouTubeSearch> {
   }
 
   Future<void> _loadMockResponse() async {
-    Future.delayed(Duration(seconds: 3), () {
-      setState(() {
-        _isLoading = false;
-      });
+    String url = baseUrl +
+        "search?part=snippet&maxResults=$maxResult&q=${_controller.text}&videoType=any&key=$apiKey";
+    final encodeFul = Uri.encodeFull(url);
+    final res = await httpClient.get(encodeFul);
+    setState(() {
+      _isLoading = false;
     });
-    final assetData =
-        await rootBundle.loadString('assets/api/youtube_serach.json');
-    final response = YoutubeSearchModel.fromJson(json.decode(assetData));
-    items = response.items;
-    print(response.items[7].id.videoId);
+    if (res.statusCode == 200) {
+      final data = YoutubeSearchModel.fromJson(json.decode(res.body));
+      items = data.items;
+    }
   }
 
   Widget _searchWidget() {
@@ -57,9 +67,17 @@ class _YouTubeSearchState extends State<YouTubeSearch> {
                 color: Colors.black.withOpacity(.2),
               ),
               child: TextField(
+                controller: _controller,
                 style: TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                    hintText: "search Youtube", border: InputBorder.none),
+                    suffixIcon: InkWell(
+                      onTap: () {
+                        _loadMockResponse();
+                      },
+                      child: Icon(Icons.search),
+                    ),
+                    hintText: "search Youtube",
+                    border: InputBorder.none),
               )),
         ),
         SizedBox(
