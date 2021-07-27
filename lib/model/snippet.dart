@@ -17,7 +17,7 @@ class Snippet {
       publishedAt: json['publishedAt'],
       channelId: json['channelId'],
       title: json['title'],
-      description: json[' description'],
+      description: json['description'],
       thumbnail: Thumbnail.fromJson(json['thumbnails']),
     );
   }

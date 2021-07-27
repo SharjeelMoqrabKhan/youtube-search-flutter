@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:youtube_search_flutter/model/item_data.dart';
 import 'package:youtube_search_flutter/model/youtube_serach_model.dart';
 
 class YouTubeSearch extends StatefulWidget {
@@ -12,6 +13,8 @@ class YouTubeSearch extends StatefulWidget {
 class _YouTubeSearchState extends State<YouTubeSearch> {
   int navigatinIndex = 0;
   bool _isSearch = false;
+  List<ItemData> items = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -20,10 +23,16 @@ class _YouTubeSearchState extends State<YouTubeSearch> {
   }
 
   Future<void> _loadMockResponse() async {
+    Future.delayed(Duration(seconds: 3), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
     final assetData =
         await rootBundle.loadString('assets/api/youtube_serach.json');
     final response = YoutubeSearchModel.fromJson(json.decode(assetData));
-    print(response.items[0].snippet.thumbnail.high.url);
+    items = response.items;
+    print(response.items[7].id.videoId);
   }
 
   Widget _searchWidget() {
@@ -137,41 +146,56 @@ class _YouTubeSearchState extends State<YouTubeSearch> {
           BottomNavigationBarItem(icon: Icon(Icons.wysiwyg), label: "Libray"),
         ],
       ),
-      body: ListView.builder(
-        itemCount: 8,
-        itemBuilder: (context, index) {
-          return Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 200,
-                  width: double.infinity,
-                  color: Colors.grey,
-                  child: Center(
-                    child: Text('Video Thumbnail'),
+      body: _isLoading == true
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                return InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/videoPlay',
+                        arguments: items[index]);
+                  },
+                  child: Container(
+                    child: Card(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 200,
+                            width: double.infinity,
+                            color: Colors.grey,
+                            child: Center(
+                              child: Image.network(
+                                items[index].snippet.thumbnail.medium.url,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 8.0,
+                          ),
+                          Text(
+                            '${items[index].snippet.title}',
+                            maxLines: 2,
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                          SizedBox(
+                            height: 8.0,
+                          ),
+                          Text(
+                            "${items[index].snippet.publishedAt}",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 8.0,
-                ),
-                Text(
-                  "Video Title",
-                  maxLines: 2,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-                SizedBox(
-                  height: 8.0,
-                ),
-                Text(
-                  "Channal Title",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-              ],
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }
